@@ -1,0 +1,39 @@
+name: "Terraform Continuous Integration"
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  terraform_pipeline:
+    name: "Automated GitOps Core Build"
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: "Clone Repository Code Files"
+        uses: actions/checkout@v4
+
+      - name: "Install Terraform Engine Binaries"
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: "1.16.2"
+
+      - name: "Audit Code Formatting Style Rules"
+        run: terraform fmt -check
+
+      # 💾 SECURE INITIALIZATION: Fully authenticates with AWS to safely read/write from your S3 backend bucket!
+      - name: "Initialize Remote IaC Workspace"
+        run: terraform init
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+
+      - name: "Compile Pre-Flight Syntax Check"
+        run: terraform validate
+
+      - name: "Generate Live Cloud Infrastructure Plan Forecast"
+        run: terraform plan
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
