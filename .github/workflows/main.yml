@@ -37,10 +37,19 @@ jobs:
         env:
           AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
           AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          
-            # 🚀 THE CONTINUOUS DEPLOYMENT GEAR: Build your 10 resources live in Ireland!
-      - name: "Execute Automated Live Cloud Infrastructure Deployment"
-        run: terraform apply -auto-approve
+
+            #  🔴 Inactive Apply Step (The '#' tells the worker to ignore this block completely)
+           #  THE CONTINUOUS DEPLOYMENT GEAR: Build your 10 resources live in Ireland!
+      #  - name: "Execute Automated Live Cloud Infrastructure Deployment"
+       #   run: terraform apply -auto-approve
+         # env:
+         #   AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+           # AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+
+
+      # 🟢 Active Teardown Step: Automatically vaporize all live cloud assets cleanly
+      - name: "Execute Automated Live Cloud Infrastructure Teardown"
+        run: terraform destroy -auto-approve # ⚡ MASTER FINOPS TEARDOWN TRIGGER!
         env:
           AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
           AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
