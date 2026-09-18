@@ -91,7 +91,7 @@ resource "aws_iam_role_policy_attachment" "ssm_attach" {
 
 resource "aws_iam_instance_profile" "ssm_profile" {
   # 🔄 FIXED UNIQUE NAME: Append "-prod" to bypass global profile conflicts!
-  name = "EC2-SSM-Instance-Profile-TF-prod" 
+  name = "EC2-SSM-Instance-Profile-TF-prod"
   role = aws_iam_role.ssm_role.name
 }
 
