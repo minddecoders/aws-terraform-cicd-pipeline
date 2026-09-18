@@ -21,14 +21,14 @@ resource "aws_vpc" "sidra_automated_vpc" {
   cidr_block           = var.vpc_cidr
   enable_dns_hostnames = true
   enable_dns_support   = true
-  tags = { Name = "sidra-automated-vpc" }
+  tags                 = { Name = "sidra-automated-vpc" }
 }
 
 resource "aws_subnet" "sidra_public_subnet" {
   vpc_id            = aws_vpc.sidra_automated_vpc.id
   cidr_block        = var.public_subnet_cidr
   availability_zone = "${var.aws_region}a"
-  tags = { Name = "sidra-automated-public-1a" }
+  tags              = { Name = "sidra-automated-public-1a" }
 }
 
 resource "aws_internet_gateway" "sidra_igw" {
@@ -126,7 +126,7 @@ resource "aws_subnet" "sidra_private_subnet" {
   vpc_id            = aws_vpc.sidra_automated_vpc.id
   cidr_block        = var.private_subnet_cidr
   availability_zone = "${var.aws_region}b"
-  tags = { Name = "sidra-automated-private-1b" }
+  tags              = { Name = "sidra-automated-private-1b" }
 }
 
 resource "aws_route_table" "sidra_private_rt" {
