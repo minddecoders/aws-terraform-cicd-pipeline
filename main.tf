@@ -8,7 +8,14 @@ terraform {
       version = "~> 5.0"
     }
   }
+  # 💾 FIXED BACKEND: Cleanly separated lines to guarantee S3 state tracking syncs!
+  backend "s3" {
+    bucket = "sidra-prod-state-vault-2026"
+    key    = "cicd-pipeline/terraform.tfstate"
+    region = "eu-west-1"
+  }
 }
+
 
 provider "aws" {
   region = var.aws_region
