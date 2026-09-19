@@ -1,0 +1,45 @@
+name: "Terraform Apply"
+
+on:
+  workflow_dispatch: # 🎛️ Manual control switch triggered exclusively by your click!
+
+permissions:
+  contents: read
+
+jobs:
+  terraform_apply:
+    name: "Execute Automated Live Cloud Deployment"
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: "Checkout Repository Code"
+        uses: actions/checkout@v4
+
+      - name: "Setup Terraform Engine"
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: "1.16.2" # Matches your precise local cockpit!
+
+      - name: "Terraform Format Check"
+        run: terraform fmt -check -recursive
+
+      - name: "Initialize S3 Remote Backend"
+        run: terraform init -input=false
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+
+      - name: "Terraform Validate"
+        run: terraform validate
+
+      - name: "Generate Live Cloud Infrastructure Plan"
+        run: terraform plan -out=tfplan -input=false
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+
+      - name: "Execute Saved Plan Forecast"
+        run: terraform apply -input=false tfplan
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}

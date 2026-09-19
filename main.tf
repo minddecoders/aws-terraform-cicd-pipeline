@@ -13,6 +13,7 @@ terraform {
     bucket = "sidra-prod-state-vault-2026"
     key    = "cicd-pipeline/terraform.tfstate"
     region = "eu-west-1"
+    use_lockfile = true
   }
 }
 
