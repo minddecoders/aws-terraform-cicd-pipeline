@@ -80,7 +80,7 @@ resource "aws_security_group" "sidra_web_sg" {
 # PHASE 3: SECURE IAM IDENTITY MANAGEMENT
 # ==========================================
 resource "aws_iam_role" "ssm_role" {
-  name = "EC2-SSM-Core-Role-TF-prod" # 🔄 UNIQUE ROLE NAME!
+  name = "EC2-SSM-Core-Role-TF-prod-cicd" # 🔄 UNIQUE ROLE NAME!
 
   assume_role_policy = jsonencode({
     Version = "2012-10-17"
@@ -99,7 +99,7 @@ resource "aws_iam_role_policy_attachment" "ssm_attach" {
 
 resource "aws_iam_instance_profile" "ssm_profile" {
   # 🔄 FIXED UNIQUE NAME: Append "-prod" to bypass global profile conflicts!
-  name = "EC2-SSM-Instance-Profile-TF-prod"
+  name = "EC2-SSM-Instance-Profile-TF-prod-cicd"
   role = aws_iam_role.ssm_role.name
 }
 
