@@ -43,3 +43,18 @@ variable "instance_type" {
   description = "EC2 computing tier footprint size"
   default     = "t3.micro"
 }
+
+# 🐳 NEW DEPLOYMENT CONFIGURATIONS
+variable "container_image" {
+  type        = string
+  description = "Docker Hub image used by the ECS Fargate task"
+  default     = "minddecoders/storefront-app:v1.0"
+}
+
+variable "container_port" {
+  type        = number
+  description = "Port exposed by the container"
+  default     = 80
+}
+
+

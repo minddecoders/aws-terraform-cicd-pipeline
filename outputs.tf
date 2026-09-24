@@ -25,3 +25,18 @@ output "private_instance_id" {
   value       = aws_instance.ssm_private_vm.id
   description = "The core instance tracking ID for the backend isolated node"
 }
+# 🐳 NEW ECS TELEMETRY SINK OUTPUTS
+output "ecs_cluster_name" {
+  value       = aws_ecs_cluster.sidra_cluster.name
+  description = "ECS cluster name"
+}
+
+output "ecs_service_name" {
+  value       = aws_ecs_service.sidra_service.name
+  description = "ECS service name"
+}
+
+output "ecs_task_definition" {
+  value       = aws_ecs_task_definition.sidra_task.family
+  description = "ECS task definition family"
+}

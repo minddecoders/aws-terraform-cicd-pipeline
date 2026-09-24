@@ -80,7 +80,7 @@ resource "aws_security_group" "sidra_web_sg" {
 # PHASE 3: SECURE IAM IDENTITY MANAGEMENT
 # ==========================================
 resource "aws_iam_role" "ssm_role" {
-  name = "EC2-SSM-Core-Role-TF-prod-cicd" # 🔄 UNIQUE ROLE NAME!
+  name = "EC2-SSM-Core-Role-TF-prod-cicd-2026" # 🔄 UNIQUE ROLE NAME!
 
   assume_role_policy = jsonencode({
     Version = "2012-10-17"
@@ -99,7 +99,7 @@ resource "aws_iam_role_policy_attachment" "ssm_attach" {
 
 resource "aws_iam_instance_profile" "ssm_profile" {
   # 🔄 FIXED UNIQUE NAME: Append "-prod" to bypass global profile conflicts!
-  name = "EC2-SSM-Instance-Profile-TF-prod-cicd"
+  name = "EC2-SSM-Instance-Profile-TF-prod-cicd-2026"
   role = aws_iam_role.ssm_role.name
 }
 
@@ -166,6 +166,7 @@ resource "aws_security_group" "sidra_private_db_sg" {
     security_groups = [aws_security_group.sidra_web_sg.id]
   }
 
+
   ingress {
     description     = "Allow internal management traffic from the public web host"
     from_port       = 0
@@ -201,4 +202,88 @@ resource "aws_instance" "ssm_private_vm" {
   }
 }
 
+# ==========================================================
+# PHASE 6: SERVERLESS CONTAINER ORCHESTRATION (ECS & FARGATE)
+# ==========================================================
+
+resource "aws_ecs_cluster" "sidra_cluster" {
+  name = "sidra-healthcare-production-cluster"
+
+  tags = {
+    Environment = "Production"
+    ManagedBy   = "Terraform-IaC"
+  }
+}
+
+resource "aws_iam_role" "ecs_task_execution_role" {
+  name = "sidra-ecs-task-execution-role"
+
+  assume_role_policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [{
+      Effect = "Allow"
+      Principal = {
+        Service = "ecs-tasks.amazonaws.com"
+      }
+      Action = "sts:AssumeRole"
+    }]
+  })
+
+  tags = {
+    Environment = "Production"
+    ManagedBy   = "Terraform-IaC"
+  }
+}
+
+resource "aws_iam_role_policy_attachment" "ecs_task_execution" {
+  role       = aws_iam_role.ecs_task_execution_role.name
+  policy_arn = "arn:aws:iam::aws:policy/service-role/AmazonECSTaskExecutionRolePolicy"
+}
+
+resource "aws_ecs_task_definition" "sidra_task" {
+  family                   = "sidra-storefront-task"
+  network_mode             = "awsvpc"
+  requires_compatibilities = ["FARGATE"]
+  cpu                      = "256"
+  memory                   = "512"
+  execution_role_arn       = aws_iam_role.ecs_task_execution_role.arn
+
+  container_definitions = jsonencode([
+    {
+      name      = "sidra-storefront"
+      image     = var.container_image
+      essential = true
+      portMappings = [
+        {
+          containerPort = var.container_port
+          hostPort      = var.container_port
+          protocol      = "tcp"
+        }
+      ]
+    }
+  ])
+
+  tags = {
+    Environment = "Production"
+    ManagedBy   = "Terraform-IaC"
+  }
+}
+
+resource "aws_ecs_service" "sidra_service" {
+  name            = "sidra-storefront-service"
+  cluster         = aws_ecs_cluster.sidra_cluster.id
+  task_definition = aws_ecs_task_definition.sidra_task.arn
+  desired_count   = 1
+  launch_type     = "FARGATE"
+
+  network_configuration {
+    subnets          = [aws_subnet.sidra_public_subnet.id]
+    security_groups  = [aws_security_group.sidra_web_sg.id]
+    assign_public_ip = true
+  }
+
+  depends_on = [
+    aws_iam_role_policy_attachment.ecs_task_execution
+  ]
+}
 
