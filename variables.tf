@@ -19,6 +19,13 @@ variable "public_subnet_cidr" {
   description = "CIDR range for the front-facing public web tier"
   default     = "10.90.1.0/24"
 }
+# 🛡️  ALB have must two public subnets 
+variable "public_subnet_b_cidr" {
+  type        = string
+  description = "CIDR block for the second redundant public subnet tier"
+  default     = "10.90.3.0/24" # A fresh, unconflicting network lane
+}
+
 
 variable "private_subnet_cidr" {
   type        = string
@@ -44,7 +51,9 @@ variable "instance_type" {
   default     = "t3.micro"
 }
 
-# 🐳 NEW DEPLOYMENT CONFIGURATIONS
+
+# 🐳 Docker
+# NEW DEPLOYMENT CONFIGURATIONS
 variable "container_image" {
   type        = string
   description = "Docker Hub image used by the ECS Fargate task"

@@ -32,12 +32,6 @@ resource "aws_vpc" "sidra_automated_vpc" {
   tags                 = { Name = "sidra-automated-vpc" }
 }
 
-resource "aws_subnet" "sidra_public_subnet" {
-  vpc_id            = aws_vpc.sidra_automated_vpc.id
-  cidr_block        = var.public_subnet_cidr
-  availability_zone = "${var.aws_region}a"
-  tags              = { Name = "sidra-automated-public-1a" }
-}
 
 resource "aws_internet_gateway" "sidra_igw" {
   vpc_id = aws_vpc.sidra_automated_vpc.id
@@ -51,10 +45,33 @@ resource "aws_route_table" "sidra_public_rt" {
   }
 }
 
+resource "aws_subnet" "sidra_public_subnet" {
+  vpc_id            = aws_vpc.sidra_automated_vpc.id
+  cidr_block        = var.public_subnet_cidr
+  availability_zone = "${var.aws_region}a"
+  tags              = { Name = "sidra-automated-public-1a" }
+}
+
 resource "aws_route_table_association" "sidra_public_assoc" {
   subnet_id      = aws_subnet.sidra_public_subnet.id
   route_table_id = aws_route_table.sidra_public_rt.id
 }
+# 🛡️ ALB have must two public subnets 
+resource "aws_subnet" "sidra_public_subnet_b" {
+  vpc_id            = aws_vpc.sidra_automated_vpc.id
+  cidr_block        = var.public_subnet_b_cidr
+  availability_zone = "eu-west-1b" # 🛰️ Separate availability zone building!
+
+  tags = {
+    Name = "sidra-automated-public-1b"
+  }
+}
+# 🛡️ ALB
+resource "aws_route_table_association" "public_b_assoc" {
+  subnet_id      = aws_subnet.sidra_public_subnet_b.id
+  route_table_id = aws_route_table.sidra_public_rt.id
+}
+
 
 resource "aws_security_group" "sidra_web_sg" {
   name        = "sidra-automated-web-sg"
@@ -74,6 +91,8 @@ resource "aws_security_group" "sidra_web_sg" {
     protocol    = "-1"
     cidr_blocks = ["0.0.0.0/0"]
   }
+
+
 }
 
 # ==========================================
@@ -203,6 +222,7 @@ resource "aws_instance" "ssm_private_vm" {
 }
 
 # ==========================================================
+# 🐳 Docker
 # PHASE 6: SERVERLESS CONTAINER ORCHESTRATION (ECS & FARGATE)
 # ==========================================================
 
@@ -282,8 +302,73 @@ resource "aws_ecs_service" "sidra_service" {
     assign_public_ip = true
   }
 
+
+  # 🛡️ ALB
+  # ENTERPRISE BINDING: Hooks your Fargate task right behind your Load Balancer router!
+  load_balancer {
+    target_group_arn = aws_lb_target_group.sidra_ecs_tg.arn
+    container_name   = "sidra-storefront"
+    container_port   = var.container_port
+  }
+
   depends_on = [
-    aws_iam_role_policy_attachment.ecs_task_execution
+    aws_iam_role_policy_attachment.ecs_task_execution,
+    aws_lb_listener.sidra_http_listener # Guarantees the listener exists before the container hooks in
   ]
 }
 
+# ==========================================================
+#  🛡️ ALB 
+# PHASE 7: ENTERPRISE HIGH-AVAILABILITY APPLICATION LOAD BALANCER
+# ==========================================================
+
+# 1. Public External Application Load Balancer Router
+resource "aws_lb" "sidra_alb" {
+  name               = "sidra-healthcare-prod-alb"
+  internal           = false # Setting to false creates an internet-facing public router
+  load_balancer_type = "application"
+  security_groups    = [aws_security_group.sidra_web_sg.id]
+  # 💥 FIXED DUAL PUBLIC INGRESS HOOKS: Connected to two real public zones!
+  subnets = [aws_subnet.sidra_public_subnet.id, aws_subnet.sidra_public_subnet_b.id]
+
+  tags = {
+    Environment = "Production"
+    ManagedBy   = "Terraform-IaC"
+  }
+}
+
+# 2. ALB Target Group Routing Vault Bucket Container
+resource "aws_lb_target_group" "sidra_ecs_tg" {
+  name        = "sidra-ecs-storefront-tg"
+  port        = var.container_port # Directs traffic onto container port 80
+  protocol    = "HTTP"
+  vpc_id      = aws_vpc.sidra_automated_vpc.id
+  target_type = "ip" # This flag is mandatory when routing traffic onto serverless AWS Fargate tasks
+
+  health_check {
+    path                = "/"
+    protocol            = "HTTP"
+    matcher             = "200"
+    interval            = 30
+    timeout             = 5
+    healthy_threshold   = 3
+    unhealthy_threshold = 3
+  }
+
+  tags = {
+    Environment = "Production"
+    ManagedBy   = "Terraform-IaC"
+  }
+}
+
+# 3. ALB Listener Gatekeeper Entry Process
+resource "aws_lb_listener" "sidra_http_listener" {
+  load_balancer_arn = aws_lb.sidra_alb.arn
+  port              = "80"
+  protocol          = "HTTP"
+
+  default_action {
+    type             = "forward"
+    target_group_arn = aws_lb_target_group.sidra_ecs_tg.arn
+  }
+}
