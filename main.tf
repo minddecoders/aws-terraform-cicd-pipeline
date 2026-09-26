@@ -220,11 +220,22 @@ resource "aws_instance" "ssm_private_vm" {
     ManagedBy = "Terraform-IaC"
   }
 }
-
 # ==========================================================
-# 🐳 Docker
+# 🐳 ECS
 # PHASE 6: SERVERLESS CONTAINER ORCHESTRATION (ECS & FARGATE)
 # ==========================================================
+
+# ⭐ CloudWatch
+# ADDITION 1: Dedicated Cloud Storage Vault Room for System Connection Logs
+resource "aws_cloudwatch_log_group" "ecs_log_group" {
+  name              = "/ecs/sidra-storefront-production-logs"
+  retention_in_days = 7 # FinOps optimization rule to clear old logs automatically
+
+  tags = {
+    Environment = "Production"
+    ManagedBy   = "Terraform-IaC"
+  }
+}
 
 resource "aws_ecs_cluster" "sidra_cluster" {
   name = "sidra-healthcare-production-cluster"
@@ -280,6 +291,16 @@ resource "aws_ecs_task_definition" "sidra_task" {
           protocol      = "tcp"
         }
       ]
+
+      # # ⭐ CloudWatch : ADDITION 3: Telemetry system configuration driver argument array!
+      logConfiguration = {
+        logDriver = "awslogs"
+        options = {
+          "awslogs-group"         = aws_cloudwatch_log_group.ecs_log_group.name
+          "awslogs-region"        = var.aws_region
+          "awslogs-stream-prefix" = "ecs"
+        }
+      }
     }
   ])
 
@@ -288,6 +309,7 @@ resource "aws_ecs_task_definition" "sidra_task" {
     ManagedBy   = "Terraform-IaC"
   }
 }
+
 
 resource "aws_ecs_service" "sidra_service" {
   name            = "sidra-storefront-service"
