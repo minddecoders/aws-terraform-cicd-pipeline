@@ -1,40 +1,62 @@
-name: "Terraform Plan"
+name: "Automated GitOps Infrastructure Planning & Security Audit"
 
 on:
-  workflow_dispatch: # 🎛️ Manual control switch triggered exclusively by your click!
+  push:
+    branches:
+      - main
+  workflow_dispatch:
 
 permissions:
   contents: read
+  security-events: write
 
 jobs:
-  terraform_plan:
-    name: "Execute Safe Cloud Infrastructure Forecast"
+  terraform-plan:
+    name: "Security Audit & IaC Plan Forecast"
     runs-on: ubuntu-latest
+    
+    defaults:
+      run:
+        shell: bash
 
     steps:
-      - name: "Checkout Repository Code"
+      # 1. Download the latest pushed codebase from your repository branch canvas
+      - name: "Checkout Codebase Repository"
         uses: actions/checkout@v4
 
-      - name: "Setup Terraform Engine"
+      # 🛡️ 2. THE SECURITY QUALITY GATE: Executes Deep Checkov Scanner Compliance Sweep!
+      - name: "Run Checkov Static Code Analysis Security Audit"
+        uses: bridgecrewio/checkov-action@master
+        with:
+          framework: terraform
+          output_format: cli
+          soft_fail: false # 🛑 Crashes the build instantly if a security vulnerability is caught!
+
+      # 3. Setup the official HashiCorp Terraform binary tool runner environment
+      - name: "Setup Terraform Execution Core"
         uses: hashicorp/setup-terraform@v3
         with:
-          terraform_version: "1.16.2"
+          terraform_version: "1.16.2" # 🔄 FIXED: Synchronized with your local environment setup!
 
-      - name: "Terraform Format Check"
-        run: terraform fmt -check -recursive
+      # 4. Enforce clean corporate spacing layouts across the workspace
+      - name: "Verify Layout Spacing and Format Compliance"
+        run: terraform fmt -check -recursive # 🔄 ADDED: Catches messy layout spacing gaps!
 
-      - name: "Initialize S3 Remote Backend"
-        run: terraform init -input=false
+      # 5. Initialize background plugin engines and hook into S3 remote state tracking vault
+      - name: "Initialize S3 Remote State backend connection"
         env:
           AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
           AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        run: terraform init
 
-      - name: "Terraform Validate"
-        run: terraform validate
+      # 🛡️ 6. Validate semantics, modules, and parameter attributes
+      - name: "Execute Code Semantics Validation Gate"
+        run: terraform validate # 🔄 FIXED ORDER: Protects the perimeter before the plan generation!
 
-      # 📊 SAFE TRACK: Runs a live forecast comparison check against AWS without modifying a single resource!
-      - name: "Generate Live Cloud Infrastructure Plan"
-        run: terraform plan -input=false
+      # 7. Generate a live comparison map forecast against AWS
+      - name: "Generate Automated Plan Forecast Layout"
         env:
           AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
           AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        run: terraform plan
+

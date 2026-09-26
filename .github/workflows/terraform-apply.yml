@@ -1,8 +1,10 @@
-name: "Automated GitOps Infrastructure Continuous Delivery" # 🛰️ THE AUTOMATED TRIGGER SECTOR: Fires immediately on any code push to main!
+#name: "Automated GitOps Infrastructure Continuous Delivery" # 🛰️ THE AUTOMATED TRIGGER SECTOR: Fires immediately on any code push to main!
+#on:
+ # push:
+ #   branches:
+ #     - main
 on:
-  push:
-    branches:
-      - main
+  workflow_dispatch:
 
 permissions:
   contents: read
