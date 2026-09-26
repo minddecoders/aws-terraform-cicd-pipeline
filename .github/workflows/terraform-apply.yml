@@ -1,7 +1,11 @@
-name: "Terraform Apply"
 
+  name: "Automated GitOps Infrastructure Continuous Delivery"
+
+# 🛰️ THE AUTOMATED TRIGGER SECTOR: Fires immediately on any code push to main!
 on:
-  workflow_dispatch: # 🎛️ Manual control switch triggered exclusively by your click!
+  push:
+    branches:
+      - main
 
 permissions:
   contents: read
