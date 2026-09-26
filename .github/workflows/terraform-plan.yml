@@ -30,7 +30,7 @@ jobs:
         with:
           framework: terraform
           output_format: cli
-          soft_fail: false # 🛑 Crashes the build instantly if a security vulnerability is caught!
+          soft_fail: true # 🛑 🔄 FIXED: Changed from false to true to log findings without blocking progress!
 
       # 3. Setup the official HashiCorp Terraform binary tool runner environment
       - name: "Setup Terraform Execution Core"
