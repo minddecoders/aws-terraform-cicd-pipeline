@@ -3,15 +3,16 @@ name: "GitOps - Security Plan"
 on:
   workflow_dispatch:
 
-permissions:
-  contents: read
-  id-token: write
-
 jobs:
   terraform-plan:
     name: "Security Audit & IaC Plan Forecast"
     runs-on: ubuntu-latest
     
+    # 🛡️ SYSTEM CLEARANCE GATE: Locks security tokens explicitly down to this job block runtime environment!
+    permissions:
+      contents: read      # Grants permission to read code files safely
+      id-token: write      # 🔑 MANDATORY: Authorizes GitHub Actions runner VM to dynamically mint genuine OIDC identity tokens!
+
     defaults:
       run:
         shell: bash
@@ -28,7 +29,7 @@ jobs:
           output_format: cli
           soft_fail: true
 
-      # 🔑 STABLE KEYLESS HANDSHAKE: Uses verified v4 to trade OIDC tokens cleanly!
+      # 🔑 100% SECURE HANDSHAKE: Uses verified stable v4 to pass genuine OIDC tokens cleanly!
       - name: "Authenticate to AWS using OIDC"
         uses: aws-actions/configure-aws-credentials@v4
         with:
