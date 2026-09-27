@@ -1,8 +1,4 @@
  name: "GitOps - Auto Deploy" # 🔄 FIXED: Gives the sidebar a clean, punchy name that won't cut off!
-#on:
- # push:
- #   branches:
- #     - main
 on:
   workflow_dispatch:
 
