@@ -5,9 +5,9 @@ on:
 
 permissions:
   contents: read
-   id-token: write
+  id-token: write
 
- jobs:
+jobs:
   terraform_apply:
     name: "Execute Automated Live Cloud Deployment"
     runs-on: ubuntu-latest
