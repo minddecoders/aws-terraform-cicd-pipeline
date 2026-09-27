@@ -1,8 +1,5 @@
 name: "GitOps - Security Plan"
-#on:
- # push:
-  #  branches:
-  #    - main
+
 on:
   workflow_dispatch:
 
@@ -14,6 +11,7 @@ jobs:
   terraform-plan:
     name: "Security Audit & IaC Plan Forecast"
     runs-on: ubuntu-latest
+    
     defaults:
       run:
         shell: bash
@@ -30,8 +28,9 @@ jobs:
           output_format: cli
           soft_fail: true
 
+      # 🔑 STABLE KEYLESS HANDSHAKE: Uses verified v4 to trade OIDC tokens cleanly!
       - name: "Authenticate to AWS using OIDC"
-        uses: aws-actions/configure-aws-credentials@v6
+        uses: aws-actions/configure-aws-credentials@v4
         with:
           role-to-assume: arn:aws:iam::951614974272:role/sidra-github-actions-oidc-execution-role
           aws-region: eu-west-1
