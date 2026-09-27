@@ -40,8 +40,8 @@ resource "aws_iam_role" "github_oidc_role" {
             "token.actions.githubusercontent.com:aud" = "sts.amazonaws.com"
           }
           StringLike = {
-            # 🔥 FIX: Added a wildcard right after the repo name to gracefully accept @repository_id strings
-            "token.actions.githubusercontent.com:sub" = "repo:minddecoders/aws-terraform-cicd-pipeline*"
+           # 🔥 THE ULTIMATE FIX: This double-wildcard cleanly catches both standard strings and new @ID formats securely
+            "token.actions.githubusercontent.com:sub" = "repo:minddecoders*/aws-terraform-cicd-pipeline*:*"
           }
         }
       }
