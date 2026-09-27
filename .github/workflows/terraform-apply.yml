@@ -1,9 +1,9 @@
+ name: "GitOps - Auto Deploy" # 🔄 FIXED: Gives the sidebar a clean, punchy name that won't cut off!
 #name: "Automated GitOps Infrastructure Continuous Delivery" # 🛰️ THE AUTOMATED TRIGGER SECTOR: Fires immediately on any code push to main!
 #on:
  # push:
  #   branches:
  #     - main
- name: "GitOps - Auto Deploy" # 🔄 FIXED: Gives the sidebar a clean, punchy name that won't cut off!
 on:
   workflow_dispatch:
 

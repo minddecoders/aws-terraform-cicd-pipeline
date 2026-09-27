@@ -1,12 +1,11 @@
 name: "GitOps - Security Plan"
-
 #on:
  # push:
   #  branches:
   #    - main
 on:
   workflow_dispatch:
-  
+
 permissions:
   contents: read
   id-token: write
