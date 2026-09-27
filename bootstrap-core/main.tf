@@ -35,13 +35,13 @@ resource "aws_iam_role" "github_oidc_role" {
         Principal = { Federated = aws_iam_openid_connect_provider.github_actions.arn }
         Action    = "sts:AssumeRoleWithWebIdentity"
 
-        # 🚀 UNIFIED SECURITY EVALUATION: Standard text fields matching GitHub format token guidelines!
         Condition = {
           StringEquals = {
             "token.actions.githubusercontent.com:aud" = "sts.amazonaws.com"
           }
           StringLike = {
-            "token.actions.githubusercontent.com:sub" = "repo:minddecoders/aws-terraform-cicd-pipeline:*"
+            # 🔥 FIX: Added a wildcard right after the repo name to gracefully accept @repository_id strings
+            "token.actions.githubusercontent.com:sub" = "repo:minddecoders/aws-terraform-cicd-pipeline*"
           }
         }
       }
