@@ -29,6 +29,30 @@ jobs:
           output_format: cli
           soft_fail: true
 
+
+      # 🔍 YOUR MASTERPIECE TELEMETRY INJECTION: Unpacks and prints raw structural token payloads live!
+      - name: "Debug GitHub OIDC Claims"
+        uses: actions/github-script@v7
+        with:
+          script: |
+            try {
+              const token = await core.getIDToken('sts.amazonaws.com');
+              const payload = JSON.parse(
+                Buffer.from(token.split('.')[1], 'base64url').toString()
+              );
+              console.log("================ GITHUB OIDC JWT CLAIMS ================");
+              console.log("SUB:", payload.sub);
+              console.log("AUD:", payload.aud);
+              console.log("ISS:", payload.iss);
+              console.log("REPOSITORY:", payload.repository);
+              console.log("REPOSITORY_ID:", payload.repository_id);
+              console.log("OWNER_ID:", payload.repository_owner_id);
+              console.log("REF:", payload.ref);
+              console.log("========================================================");
+            } catch (error) {
+              console.log("OIDC Token generation failed inside GitHub:", error);
+            }
+
       # 🔑 100% SECURE HANDSHAKE: Uses verified stable v4 to pass genuine OIDC tokens cleanly!
       - name: "Authenticate to AWS using OIDC"
         uses: aws-actions/configure-aws-credentials@v4
