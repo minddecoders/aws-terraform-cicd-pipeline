@@ -49,7 +49,7 @@ resource "aws_iam_role" "github_oidc_role" {
           }
 
           StringLike = {
-            "token.actions.githubusercontent.com:sub" = "repo:minddecoders/aws-terraform-cicd-pipeline:ref:refs/heads/main"
+            "token.actions.githubusercontent.com:sub" = "repo:minddecoders/aws-terraform-cicd-pipeline:*"
           }
         }
       }
