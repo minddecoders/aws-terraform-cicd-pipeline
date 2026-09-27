@@ -3,20 +3,35 @@
  # push:
  #   branches:
  #     - main
+ name: "GitOps - Auto Deploy" # 🔄 FIXED: Gives the sidebar a clean, punchy name that won't cut off!
 on:
   workflow_dispatch:
 
 permissions:
   contents: read
+   id-token: write
 
-jobs:
+ jobs:
   terraform_apply:
     name: "Execute Automated Live Cloud Deployment"
     runs-on: ubuntu-latest
+    defaults:
+      run:
+        shell: bash
+        working-directory: ./application-infra
 
     steps:
       - name: "Checkout Repository Code"
         uses: actions/checkout@v4
+
+      - name: "Authenticate to AWS using OIDC"
+        uses: aws-actions/configure-aws-credentials@v6
+        with:
+          role-to-assume: arn:aws:iam::951614974272:role/sidra-github-actions-oidc-execution-role
+          aws-region: eu-west-1
+
+      - name: "Verify AWS OIDC Identity"
+        run: aws sts get-caller-identity
 
       - name: "Setup Terraform Engine"
         uses: hashicorp/setup-terraform@v3
@@ -28,21 +43,14 @@ jobs:
 
       - name: "Initialize S3 Remote Backend"
         run: terraform init -input=false
-        env:
-          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        
 
       - name: "Terraform Validate"
         run: terraform validate
 
       - name: "Generate Live Cloud Infrastructure Plan"
         run: terraform plan -out=tfplan -input=false
-        env:
-          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+     
 
       - name: "Execute Saved Plan Forecast"
         run: terraform apply -input=false tfplan
-        env:
-          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}

@@ -1,62 +1,58 @@
-name: "Automated GitOps Infrastructure Planning & Security Audit"
+name: "GitOps - Security Plan"
 
+#on:
+ # push:
+  #  branches:
+  #    - main
 on:
-  push:
-    branches:
-      - main
   workflow_dispatch:
-
+  
 permissions:
   contents: read
-  security-events: write
+  id-token: write
 
 jobs:
   terraform-plan:
     name: "Security Audit & IaC Plan Forecast"
     runs-on: ubuntu-latest
-    
     defaults:
       run:
         shell: bash
+        working-directory: ./application-infra
 
     steps:
-      # 1. Download the latest pushed codebase from your repository branch canvas
       - name: "Checkout Codebase Repository"
         uses: actions/checkout@v4
 
-      # 🛡️ 2. THE SECURITY QUALITY GATE: Executes Deep Checkov Scanner Compliance Sweep!
       - name: "Run Checkov Static Code Analysis Security Audit"
         uses: bridgecrewio/checkov-action@master
         with:
           framework: terraform
           output_format: cli
-          soft_fail: true # 🛑 🔄 FIXED: Changed from false to true to log findings without blocking progress!
+          soft_fail: true
 
-      # 3. Setup the official HashiCorp Terraform binary tool runner environment
-      - name: "Setup Terraform Execution Core"
+      - name: "Authenticate to AWS using OIDC"
+        uses: aws-actions/configure-aws-credentials@v6
+        with:
+          role-to-assume: arn:aws:iam::951614974272:role/sidra-github-actions-oidc-execution-role
+          aws-region: eu-west-1
+
+      - name: "Verify AWS OIDC Identity"
+        run: aws sts get-caller-identity
+
+      - name: "Setup Terraform Engine"
         uses: hashicorp/setup-terraform@v3
         with:
-          terraform_version: "1.16.2" # 🔄 FIXED: Synchronized with your local environment setup!
+          terraform_version: "1.16.2"
 
-      # 4. Enforce clean corporate spacing layouts across the workspace
-      - name: "Verify Layout Spacing and Format Compliance"
-        run: terraform fmt -check -recursive # 🔄 ADDED: Catches messy layout spacing gaps!
+      - name: "Terraform Format Check"
+        run: terraform fmt -check -recursive
 
-      # 5. Initialize background plugin engines and hook into S3 remote state tracking vault
-      - name: "Initialize S3 Remote State backend connection"
-        env:
-          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-        run: terraform init
+      - name: "Initialize S3 Remote Backend"
+        run: terraform init -input=false
 
-      # 🛡️ 6. Validate semantics, modules, and parameter attributes
-      - name: "Execute Code Semantics Validation Gate"
-        run: terraform validate # 🔄 FIXED ORDER: Protects the perimeter before the plan generation!
+      - name: "Terraform Validate"
+        run: terraform validate
 
-      # 7. Generate a live comparison map forecast against AWS
-      - name: "Generate Automated Plan Forecast Layout"
-        env:
-          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-        run: terraform plan
-
+      - name: "Generate Automated Plan Forecast"
+        run: terraform plan -input=false
