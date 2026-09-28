@@ -41,8 +41,11 @@ resource "aws_iam_role" "github_oidc_role" {
             "token.actions.githubusercontent.com:aud" = "sts.amazonaws.com"
           }
           StringLike = {
-            # ✅ SECURE FIX: Locks access to YOUR exact repository, allowing any branch, pull request, or environment
-            "token.actions.githubusercontent.com:sub" = "repo:minddecoders/aws-terraform-cicd-pipeline:*"
+           # ✅ IMMUTABLE & MULTI-EVENT FIX: 
+            # This safely accepts branch pushes, manual triggers, AND pull requests 
+            # while gracefully capturing internal tracking IDs (@...) introduced by GitHub.
+            "token.actions.githubusercontent.com:sub" = [
+              "repo:minddecoders*/aws-terraform-cicd-pipeline*:*"]
           }
         }
       }

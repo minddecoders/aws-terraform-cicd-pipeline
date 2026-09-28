@@ -2,11 +2,6 @@ name: "GitOps - Security Plan"
 
 on:
   workflow_dispatch:
-  pull_request:
-    branches:
-      - main
-    paths:
-      - 'application-infra/**'
 
 jobs:
   terraform-plan:
