@@ -20,8 +20,9 @@ jobs:
       - name: "Checkout Repository Code"
         uses: actions/checkout@v4
 
+      # ✅ FIX: Downgraded to v4 since v6 is an invalid release tag
       - name: "Authenticate to AWS using OIDC"
-        uses: aws-actions/configure-aws-credentials@v6
+        uses: aws-actions/configure-aws-credentials@v4
         with:
           role-to-assume: arn:aws:iam::951614974272:role/sidra-github-actions-oidc-execution-role
           aws-region: eu-west-1
@@ -44,4 +45,4 @@ jobs:
         run: terraform plan -destroy -out=destroy.tfplan -input=false
 
       - name: "Execute Saved Destruction Plan"
-        run: terraform apply -input=false -auto-approve destroy.tfplan
+        run: terraform apply -input=false destroy.tfplan

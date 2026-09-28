@@ -2,6 +2,11 @@ name: "GitOps - Auto Deploy"
 
 on:
   workflow_dispatch:
+  push:
+    branches:
+      - main
+    paths:
+      - 'application-infra/**'
 
 permissions:
   contents: read
@@ -20,8 +25,9 @@ jobs:
       - name: "Checkout Repository Code"
         uses: actions/checkout@v4
 
+      # ✅ FIX: Downgraded to v4 since v6 is an invalid release tag
       - name: "Authenticate to AWS using OIDC"
-        uses: aws-actions/configure-aws-credentials@v6
+        uses: aws-actions/configure-aws-credentials@v4
         with:
           role-to-assume: arn:aws:iam::951614974272:role/sidra-github-actions-oidc-execution-role
           aws-region: eu-west-1
@@ -32,21 +38,19 @@ jobs:
       - name: "Setup Terraform Engine"
         uses: hashicorp/setup-terraform@v3
         with:
-          terraform_version: "1.16.2" # Matches your precise local cockpit!
+          terraform_version: "1.16.2"
 
       - name: "Terraform Format Check"
         run: terraform fmt -check -recursive
 
       - name: "Initialize S3 Remote Backend"
         run: terraform init -input=false
-        
 
       - name: "Terraform Validate"
         run: terraform validate
 
       - name: "Generate Live Cloud Infrastructure Plan"
         run: terraform plan -out=tfplan -input=false
-     
 
       - name: "Execute Saved Plan Forecast"
         run: terraform apply -input=false tfplan

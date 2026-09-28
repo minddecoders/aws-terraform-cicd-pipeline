@@ -15,9 +15,10 @@ provider "aws" {
 # 🛰️ 1. GLOBAL OIDC IDENTITY PROVIDER HOOK
 # ============================================================================
 resource "aws_iam_openid_connect_provider" "github_actions" {
-  url             = "https://token.actions.githubusercontent.com"
-  client_id_list  = ["sts.amazonaws.com"]
-  thumbprint_list = ["6938fd4d98bab03faadb97b34396831e3780aea1", "1c58a3a8518e8759bf075b76b750d4f2df264fcd", "a031c46782e6e6c662c2c87c76da9aa62ccabd8e", "57535917a0d120df61559d93daf1e9b011403b22"]
+  url            = "https://token.actions.githubusercontent.com"
+  client_id_list = ["sts.amazonaws.com"]
+  # Cleaned up to include standard trusted root/intermediate thumbprints for GitHub Actions
+  thumbprint_list = ["6938fd4d98bab03faadb97b34396831e3780aea1", "1c58a3a8518e8759bf075b76b750d4f2df264fcd"]
 }
 
 # ============================================================================
@@ -40,8 +41,8 @@ resource "aws_iam_role" "github_oidc_role" {
             "token.actions.githubusercontent.com:aud" = "sts.amazonaws.com"
           }
           StringLike = {
-           # 🔥 THE ULTIMATE FIX: This double-wildcard cleanly catches both standard strings and new @ID formats securely
-            "token.actions.githubusercontent.com:sub" = "repo:minddecoders*/aws-terraform-cicd-pipeline*:*"
+            # ✅ SECURE FIX: Locks access to YOUR exact repository, allowing any branch, pull request, or environment
+            "token.actions.githubusercontent.com:sub" = "repo:minddecoders/aws-terraform-cicd-pipeline:*"
           }
         }
       }

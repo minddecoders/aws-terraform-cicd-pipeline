@@ -60,7 +60,7 @@ resource "aws_route_table_association" "sidra_public_assoc" {
 resource "aws_subnet" "sidra_public_subnet_b" {
   vpc_id            = aws_vpc.sidra_automated_vpc.id
   cidr_block        = var.public_subnet_b_cidr
-  availability_zone = "eu-west-1b" # 🛰️ Separate availability zone building!
+  availability_zone = "${var.aws_region}b" # 🛰️ Separate availability zone building!
 
   tags = {
     Name = "sidra-automated-public-1b"
@@ -319,12 +319,14 @@ resource "aws_ecs_service" "sidra_service" {
   launch_type     = "FARGATE"
 
   network_configuration {
-    subnets          = [aws_subnet.sidra_public_subnet.id]
+    subnets = [
+      aws_subnet.sidra_public_subnet.id,
+      aws_subnet.sidra_public_subnet_b.id
+    ]
+
     security_groups  = [aws_security_group.sidra_web_sg.id]
     assign_public_ip = true
   }
-
-
   # 🛡️ ALB
   # ENTERPRISE BINDING: Hooks your Fargate task right behind your Load Balancer router!
   load_balancer {

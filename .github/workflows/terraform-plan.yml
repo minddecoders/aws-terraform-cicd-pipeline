@@ -2,6 +2,11 @@ name: "GitOps - Security Plan"
 
 on:
   workflow_dispatch:
+  pull_request:
+    branches:
+      - main
+    paths:
+      - 'application-infra/**'
 
 jobs:
   terraform-plan:
@@ -11,7 +16,7 @@ jobs:
     # 🛡️ SYSTEM CLEARANCE GATE: Locks security tokens explicitly down to this job block runtime environment!
     permissions:
       contents: read      # Grants permission to read code files safely
-      id-token: write      # 🔑 MANDATORY: Authorizes GitHub Actions runner VM to dynamically mint genuine OIDC identity tokens!
+      id-token: write     # 🔑 MANDATORY: Authorizes GitHub Actions runner VM to dynamically mint genuine OIDC identity tokens!
 
     defaults:
       run:
@@ -28,7 +33,6 @@ jobs:
           framework: terraform
           output_format: cli
           soft_fail: true
-
 
       # 🔍 YOUR MASTERPIECE TELEMETRY INJECTION: Unpacks and prints raw structural token payloads live!
       - name: "Debug GitHub OIDC Claims"
@@ -59,6 +63,7 @@ jobs:
         with:
           role-to-assume: arn:aws:iam::951614974272:role/sidra-github-actions-oidc-execution-role
           aws-region: eu-west-1
+          audience: sts.amazonaws.com
 
       - name: "Verify AWS OIDC Identity"
         run: aws sts get-caller-identity
@@ -66,7 +71,7 @@ jobs:
       - name: "Setup Terraform Engine"
         uses: hashicorp/setup-terraform@v3
         with:
-          terraform_version: "1.16.2"
+          terraform_version: "1.16.2" # Aligned to a stable long-term support release
 
       - name: "Terraform Format Check"
         run: terraform fmt -check -recursive
