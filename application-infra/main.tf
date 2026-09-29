@@ -1,3 +1,6 @@
+
+
+# ✨🆕Injecting Dynamic Workspace
 # ==========================================
 # PHASE 1: TARGET CLOUD PROVIDER PLUGINS
 # ==========================================
@@ -22,6 +25,57 @@ provider "aws" {
   region = var.aws_region
 }
 
+# ==========================================================
+# 🆕 PHASE 1.1: WORKSPACE-SPECIFIC ENVIRONMENT CONFIGURATION
+# ==========================================================
+# ✨ These values change depending on the active Terraform workspace.
+#
+# dev:
+#   EC2  = t3.micro
+#   ECS  = 0 tasks
+#
+# staging:
+#   EC2  = t3.small
+#   ECS  = 1 task
+#
+# prod:
+#   EC2  = t3.medium
+#   ECS  = 2 tasks
+# ==========================================================
+
+locals {
+
+  # 🆕 EC2 INSTANCE SIZE MAP
+  instance_sizes = {
+    default = "t3.micro"
+    dev     = "t3.micro"
+    staging = "t3.small"
+    prod    = "t3.medium"
+  }
+
+  # 🆕 ECS TASK COUNT MAP
+  ecs_task_counts = {
+    default = 0
+    dev     = 0
+    staging = 1
+    prod    = 2
+  }
+
+  # 🆕 Select EC2 size based on active workspace
+  current_instance_type = lookup(
+    local.instance_sizes,
+    terraform.workspace,
+    "t3.micro"
+  )
+
+  # 🆕 Select ECS task count based on active workspace
+  current_ecs_scale = lookup(
+    local.ecs_task_counts,
+    terraform.workspace,
+    0
+  )
+}
+
 # ==========================================
 # PHASE 2: STRUCTURAL NETWORK ARCHITECTURE
 # ==========================================
@@ -29,7 +83,7 @@ resource "aws_vpc" "sidra_automated_vpc" {
   cidr_block           = var.vpc_cidr
   enable_dns_hostnames = true
   enable_dns_support   = true
-  tags                 = { Name = "sidra-automated-vpc" }
+  tags                 = { Name = "sidra-${terraform.workspace}-automated-vpc" }
 }
 
 
@@ -56,6 +110,7 @@ resource "aws_route_table_association" "sidra_public_assoc" {
   subnet_id      = aws_subnet.sidra_public_subnet.id
   route_table_id = aws_route_table.sidra_public_rt.id
 }
+
 # 🛡️ ALB have must two public subnets 
 resource "aws_subnet" "sidra_public_subnet_b" {
   vpc_id            = aws_vpc.sidra_automated_vpc.id
@@ -66,6 +121,7 @@ resource "aws_subnet" "sidra_public_subnet_b" {
     Name = "sidra-automated-public-1b"
   }
 }
+
 # 🛡️ ALB
 resource "aws_route_table_association" "public_b_assoc" {
   subnet_id      = aws_subnet.sidra_public_subnet_b.id
@@ -127,8 +183,11 @@ resource "aws_iam_instance_profile" "ssm_profile" {
 # PHASE 4: COMPLIANT KEYLESS COMPUTE ENGINE
 # ==========================================
 resource "aws_instance" "ssm_vm" {
-  ami                         = var.public_instance_ami
-  instance_type               = var.instance_type
+  ami = var.public_instance_ami
+
+  # ✨ CHANGED: Workspace controls the EC2 size
+  instance_type = local.current_instance_type
+
   subnet_id                   = aws_subnet.sidra_public_subnet.id
   vpc_security_group_ids      = [aws_security_group.sidra_web_sg.id]
   associate_public_ip_address = true
@@ -143,7 +202,7 @@ resource "aws_instance" "ssm_vm" {
               EOF
 
   tags = {
-    Name      = "sidra-ssm-terraform-demo"
+    Name      = "sidra-${terraform.workspace}-ssm-terraform-demo"
     ManagedBy = "Terraform-IaC"
   }
 }
@@ -208,8 +267,11 @@ resource "aws_security_group" "sidra_private_db_sg" {
 }
 
 resource "aws_instance" "ssm_private_vm" {
-  ami                         = var.private_instance_ami
-  instance_type               = var.instance_type
+  ami = var.private_instance_ami
+
+  # ✨ CHANGED: Workspace controls the private EC2 size too
+  instance_type = local.current_instance_type
+
   subnet_id                   = aws_subnet.sidra_private_subnet.id
   vpc_security_group_ids      = [aws_security_group.sidra_private_db_sg.id]
   associate_public_ip_address = false
@@ -220,6 +282,7 @@ resource "aws_instance" "ssm_private_vm" {
     ManagedBy = "Terraform-IaC"
   }
 }
+
 # ==========================================================
 # 🐳 ECS
 # PHASE 6: SERVERLESS CONTAINER ORCHESTRATION (ECS & FARGATE)
@@ -315,8 +378,14 @@ resource "aws_ecs_service" "sidra_service" {
   name            = "sidra-storefront-service"
   cluster         = aws_ecs_cluster.sidra_cluster.id
   task_definition = aws_ecs_task_definition.sidra_task.arn
-  desired_count   = 1
-  launch_type     = "FARGATE"
+
+  # ✨✨✨ CHANGED: Workspace controls ECS task count ✨✨✨
+  # dev     = 0 tasks
+  # staging = 1 task
+  # prod    = 2 tasks
+  desired_count = local.current_ecs_scale
+
+  launch_type = "FARGATE"
 
   network_configuration {
     subnets = [
@@ -327,6 +396,7 @@ resource "aws_ecs_service" "sidra_service" {
     security_groups  = [aws_security_group.sidra_web_sg.id]
     assign_public_ip = true
   }
+
   # 🛡️ ALB
   # ENTERPRISE BINDING: Hooks your Fargate task right behind your Load Balancer router!
   load_balancer {
@@ -396,5 +466,3 @@ resource "aws_lb_listener" "sidra_http_listener" {
     target_group_arn = aws_lb_target_group.sidra_ecs_tg.arn
   }
 }
-
-
