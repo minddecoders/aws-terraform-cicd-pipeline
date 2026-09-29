@@ -38,6 +38,13 @@ jobs:
       - name: "Initialize S3 Remote Backend"
         run: terraform init -input=false
 
+        
+      # 📁 WORKSPACE ALIGNMENT: Points the eviction sweep directly to clean the dev sandbox room!
+      - name: "Select Target Workspace Environment"
+        run: |
+          terraform workspace select dev
+
+
       - name: "Terraform Validate"
         run: terraform validate
 
@@ -46,3 +53,4 @@ jobs:
 
       - name: "Execute Saved Destruction Plan"
         run: terraform apply -input=false destroy.tfplan
+
