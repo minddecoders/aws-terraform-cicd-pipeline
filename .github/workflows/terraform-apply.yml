@@ -2,6 +2,18 @@ name: "GitOps - Auto Deploy"
 
 on:
   workflow_dispatch:
+  # 🎛️ CHOICE INPUT INTERFACE HOOK
+    inputs:
+      environment:
+        description: "Select Target Infrastructure Environment Workspace Tier to Deploy"
+        required: true
+        default: "dev"
+        type: choice
+        options:
+          - dev
+          - staging
+          - prod
+
   
 permissions:
   contents: read
@@ -41,10 +53,12 @@ jobs:
       - name: "Initialize S3 Remote Backend"
         run: terraform init -input=false
 
-        # 📁 THE WORKSPACE SELECTOR SECTOR: Selects or builds the target environment channel automatically!
-      - name: "Select or Create Target Workspace Environment"
+       
+      #  📁 DYNAMIC WORKSPACE SELECTION: Targets only the exact sandbox room you mandate!
+      - name: "Select Target Workspace Environment"
         run: |
-          terraform workspace select dev || terraform workspace new dev
+          echo "Targeting deployment at environment tier: ${{ github.event.inputs.environment }}"
+          terraform workspace select ${{ github.event.inputs.environment }}
 
       - name: "Terraform Validate"
         run: terraform validate

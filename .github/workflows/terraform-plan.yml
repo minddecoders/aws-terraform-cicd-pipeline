@@ -2,6 +2,17 @@ name: "GitOps - Security Plan"
 
 on:
   workflow_dispatch:
+  # 🎛️ CLEANUP TARGETING INPUT SECTOR
+    inputs:
+      environment:
+        description: "Select Target Infrastructure Environment Workspace Tier to Plan"
+        required: true
+        default: "dev"
+        type: choice
+        options:
+          - dev
+          - staging
+          - prod
 
 jobs:
   terraform-plan:
@@ -74,10 +85,11 @@ jobs:
       - name: "Initialize S3 Remote Backend"
         run: terraform init -input=false
 
-        # 📁 THE WORKSPACE SELECTOR SECTOR: Selects or builds the target environment channel automatically!
-      - name: "Select or Create Dev Workspace"
+          # 📁 DYNAMIC WORKSPACE SELECTOR: Reads your dropdown choice selection instantly!
+      - name: "Select Target Workspace Environment"
         run: |
-          terraform workspace select dev || terraform workspace new dev
+          echo "Routing infrastructure plan forecast into environment tier: ${{ github.event.inputs.environment }}"
+          terraform workspace select ${{ github.event.inputs.environment }} || terraform workspace new ${{ github.event.inputs.environment }}
 
       - name: "Terraform Validate"
         run: terraform validate
