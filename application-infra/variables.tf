@@ -52,7 +52,7 @@ variable "instance_type" {
 }
 
 
-# 🐳 Docker
+# 🐳 Docker ECS
 # NEW DEPLOYMENT CONFIGURATIONS
 variable "container_image" {
   type        = string

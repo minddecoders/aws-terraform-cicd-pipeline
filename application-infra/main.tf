@@ -155,7 +155,7 @@ resource "aws_security_group" "sidra_web_sg" {
 # PHASE 3: SECURE IAM IDENTITY MANAGEMENT
 # ==========================================
 resource "aws_iam_role" "ssm_role" {
-  name = "EC2-SSM-Core-Role-TF-prod-cicd-2026" # 🔄 UNIQUE ROLE NAME!
+  name = "EC2-SSM-Core-Role-TF-${terraform.workspace}-cicd-2026" # 🔄 UNIQUE ROLE NAME!
 
   assume_role_policy = jsonencode({
     Version = "2012-10-17"
@@ -174,7 +174,7 @@ resource "aws_iam_role_policy_attachment" "ssm_attach" {
 
 resource "aws_iam_instance_profile" "ssm_profile" {
   # 🔄 FIXED UNIQUE NAME: Append "-prod" to bypass global profile conflicts!
-  name = "EC2-SSM-Instance-Profile-TF-prod-cicd-2026"
+  name = "EC2-SSM-Instance-TF-${terraform.workspace}-cicd-2026"
   role = aws_iam_role.ssm_role.name
 }
 
@@ -291,7 +291,7 @@ resource "aws_instance" "ssm_private_vm" {
 # ⭐ CloudWatch
 # ADDITION 1: Dedicated Cloud Storage Vault Room for System Connection Logs
 resource "aws_cloudwatch_log_group" "ecs_log_group" {
-  name              = "/ecs/sidra-storefront-production-logs"
+  name              = "/ecs/sidra-${terraform.workspace}-storefront-logs"
   retention_in_days = 7 # FinOps optimization rule to clear old logs automatically
 
   tags = {
@@ -301,7 +301,7 @@ resource "aws_cloudwatch_log_group" "ecs_log_group" {
 }
 
 resource "aws_ecs_cluster" "sidra_cluster" {
-  name = "sidra-healthcare-production-cluster"
+  name = "sidra-${terraform.workspace}-healthcare-cluster"
 
   tags = {
     Environment = "Production"
@@ -310,7 +310,7 @@ resource "aws_ecs_cluster" "sidra_cluster" {
 }
 
 resource "aws_iam_role" "ecs_task_execution_role" {
-  name = "sidra-ecs-task-execution-role"
+  name = "sidra-${terraform.workspace}-ecs-task-execution-role"
 
   assume_role_policy = jsonencode({
     Version = "2012-10-17"
@@ -375,7 +375,7 @@ resource "aws_ecs_task_definition" "sidra_task" {
 
 
 resource "aws_ecs_service" "sidra_service" {
-  name            = "sidra-storefront-service"
+  name            = "sidra-${terraform.workspace}-storefront-service"
   cluster         = aws_ecs_cluster.sidra_cluster.id
   task_definition = aws_ecs_task_definition.sidra_task.arn
 
@@ -418,7 +418,7 @@ resource "aws_ecs_service" "sidra_service" {
 
 # 1. Public External Application Load Balancer Router
 resource "aws_lb" "sidra_alb" {
-  name               = "sidra-healthcare-prod-alb"
+  name               = "sidra-${terraform.workspace}-healthcare-alb"
   internal           = false # Setting to false creates an internet-facing public router
   load_balancer_type = "application"
   security_groups    = [aws_security_group.sidra_web_sg.id]
@@ -433,7 +433,7 @@ resource "aws_lb" "sidra_alb" {
 
 # 2. ALB Target Group Routing Vault Bucket Container
 resource "aws_lb_target_group" "sidra_ecs_tg" {
-  name        = "sidra-ecs-storefront-tg"
+  name        = "sidra-${terraform.workspace}-storefront-tg"
   port        = var.container_port # Directs traffic onto container port 80
   protocol    = "HTTP"
   vpc_id      = aws_vpc.sidra_automated_vpc.id

@@ -41,11 +41,11 @@ resource "aws_iam_role" "github_oidc_role" {
             "token.actions.githubusercontent.com:aud" = "sts.amazonaws.com"
           }
           StringLike = {
-           # ✅ IMMUTABLE & MULTI-EVENT FIX: 
+            # ✅ IMMUTABLE & MULTI-EVENT FIX: 
             # This safely accepts branch pushes, manual triggers, AND pull requests 
             # while gracefully capturing internal tracking IDs (@...) introduced by GitHub.
             "token.actions.githubusercontent.com:sub" = [
-              "repo:minddecoders*/aws-terraform-cicd-pipeline*:*"]
+            "repo:minddecoders*/aws-terraform-cicd-pipeline*:*"]
           }
         }
       }
@@ -67,4 +67,29 @@ resource "aws_iam_role_policy_attachment" "oidc_admin_attach" {
 output "github_actions_oidc_role_arn" {
   value       = aws_iam_role.github_oidc_role.arn
   description = "The target IAM role ARN used by GitHub Actions for temporary AWS credentials"
+}
+
+# ============================================================================
+# PHASE 10: ENTERPRISE DISASTER RECOVERY • IMMUTABLE STATE STORAGE VAULT
+# ============================================================================
+
+# 1. References or declares your central S3 bucket mapping identifier
+resource "aws_s3_bucket" "state_vault" {
+  bucket        = "sidra-prod-state-vault-2026"
+  force_destroy = false # 🔒 MAXIMUM RISK PROTECTION: Prevents accidental total bucket destruction sweeps!
+
+  tags = {
+    Environment = "Production"
+    ManagedBy   = "Terraform-IaC"
+    Security    = "Versioned-State-Vault"
+  }
+}
+
+# 2. Hardens the storage parameters by enabling explicit object versioning chains
+resource "aws_s3_bucket_versioning" "state_vault_versioning" {
+  bucket = aws_s3_bucket.state_vault.id
+
+  versioning_configuration {
+    status = "Enabled" # 🔄 FORCES S3 TO CONSTRUCT HISTORICAL VERSION SNAPSHOTS PERMANENTLY!
+  }
 }
